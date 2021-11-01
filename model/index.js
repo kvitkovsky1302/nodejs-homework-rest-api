@@ -1,6 +1,5 @@
 const fs = require("fs/promises");
 const path = require("path");
-const chalk = require("chalk");
 const crypto = require("crypto");
 
 const contactsPath = path.join(__dirname, "./contacts.json");
@@ -21,7 +20,7 @@ const removeContact = async (contactId) => {
   const allContacts = await listContacts();
   const id = allContacts.findIndex((item) => contactId === item.id.toString());
   if (id === -1) {
-    return console.log(chalk.red("Incorrect contactId. Try again, plese!"));
+    return null;
   }
   const updateContacts = allContacts.splice(id, 1);
   await fs.writeFile(contactsPath, JSON.stringify(allContacts, null, 2));
