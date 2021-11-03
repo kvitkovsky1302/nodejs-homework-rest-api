@@ -11,7 +11,7 @@ const {
 const getContacts = async (req, res, next) => {
   try {
     const contacts = await listContacts();
-    res.json(contacts);
+    res.status(200).json(contacts);
   } catch (error) {
     next(error);
   }
@@ -24,7 +24,7 @@ const getContactFromId = async (req, res, next) => {
     if (!contact) {
       throw new CreateError(404, "Not found");
     }
-    res.json(contact);
+    res.status(200).json(contact);
   } catch (error) {
     next(error);
   }

@@ -2,11 +2,15 @@ const Joi = require("joi");
 const CreateError = require("http-errors");
 
 const contactSchema = Joi.object({
-  name: Joi.string().min(3).max(30).required(),
+  name: Joi.string().min(2).max(30).required(),
   email: Joi.string()
     .pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
     .required(),
-  phone: Joi.string().required(),
+  phone: Joi.string()
+    .pattern(
+      /^\s*(?:\+?(\d{1,3}))?([-. (]*(\d{3})[-. )]*)?((\d{3})[-. ]*(\d{2,4})(?:[-.x ]*(\d+))?)\s*$/
+    )
+    .required(),
 });
 
 const postValidation = (req, res, next) => {
