@@ -1,8 +1,20 @@
 const CreateError = require("http-errors");
 const { Contact } = require("../models");
 
-const getContacts = async (_, res) => {
-  const contacts = await Contact.find();
+const getContacts = async (req, res) => {
+  const { _id } = req.user;
+  const { favorite } = req.query;
+  const condition = { owner: _id };
+
+  if (favorite !== undefined) {
+    condition.favorite = favorite;
+  }
+
+  const contacts = await Contact.find(
+    condition,
+    "_id name email phone favorite owner"
+  ).populate("owner", "_id email");
+
   res.status(200).json(contacts);
 };
 
@@ -16,7 +28,8 @@ const getContactFromId = async (req, res) => {
 };
 
 const addContacts = async (req, res) => {
-  const contact = await Contact.create(req.body);
+  const newContact = { ...req.body, owner: req.user._id };
+  const contact = await Contact.create(newContact);
   res.status(201).json(contact);
 };
 

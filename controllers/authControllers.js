@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { SECRET_KEY } = process.env;
 
-const signUp = async (res, req, next) => {
+const signUp = async (req, res, next) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
   if (user) {
@@ -28,6 +28,7 @@ const signUp = async (res, req, next) => {
 
 const logIn = async (req, res, next) => {
   const { email, password } = req.body;
+  console.log("req.body", req.body);
   const user = await User.findOne({ email });
 
   if (!user || !user.comparePassword(password)) {
