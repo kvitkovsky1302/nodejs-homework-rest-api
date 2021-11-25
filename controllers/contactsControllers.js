@@ -20,7 +20,12 @@ const getContacts = async (req, res) => {
 
 const getContactFromId = async (req, res) => {
   const { contactId } = req.params;
-  const contact = await Contact.findById(contactId);
+  const { _id: ownerId } = req.user;
+  const condition = { owner: ownerId, _id: contactId };
+  const contact = await Contact.find(
+    condition,
+    "_id name email phone favorite owner"
+  );
   if (!contact) {
     throw new CreateError(404, "Not found");
   }
@@ -35,7 +40,9 @@ const addContacts = async (req, res) => {
 
 const deleteContact = async (req, res) => {
   const { contactId } = req.params;
-  const contact = await Contact.findByIdAndRemove(contactId);
+  const { _id: ownerId } = req.user;
+  const condition = { owner: ownerId, _id: contactId };
+  const contact = await Contact.findOneAndRemove(condition);
   if (!contact) {
     throw new CreateError(404, "Not found");
   }
@@ -44,7 +51,9 @@ const deleteContact = async (req, res) => {
 
 const changeContact = async (req, res) => {
   const { contactId } = req.params;
-  const contact = await Contact.findByIdAndUpdate(contactId, req.body, {
+  const { _id: ownerId } = req.user;
+  const condition = { owner: ownerId, _id: contactId };
+  const contact = await Contact.findByIdAndUpdate(condition, req.body, {
     new: true,
   });
   if (!contact) {
@@ -55,9 +64,11 @@ const changeContact = async (req, res) => {
 
 const updateStatusContact = async (req, res) => {
   const { contactId } = req.params;
+  const { _id: ownerId } = req.user;
+  const condition = { owner: ownerId, _id: contactId };
 
   const contact = await Contact.findByIdAndUpdate(
-    contactId,
+    condition,
     { favorite: req.body.favorite },
     {
       new: true,
