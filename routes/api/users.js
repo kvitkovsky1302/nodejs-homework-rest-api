@@ -16,12 +16,16 @@ const {
   getDataCurrentUser,
   updateSubscription,
   updateAvatar,
+  verify,
+  reVerify,
 } = require("../../controllers/authControllers");
 
 router.post("/signup", validation(joiUserSchema), controllerWrapper(signUp));
 router.post("/login", validation(joiUserSchema), controllerWrapper(logIn));
 router.get("/logout", authenticate, controllerWrapper(logOut));
 router.get("/current", authenticate, controllerWrapper(getDataCurrentUser));
+router.get("/verify/:verificationToken", controllerWrapper(verify));
+router.post("/verify", controllerWrapper(reVerify));
 router.patch(
   "/",
   authenticate,
