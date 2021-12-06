@@ -22,7 +22,6 @@ const signUp = async (req, res, next) => {
   }
 
   const verificationToken = v4();
-  console.log("verificationToken", verificationToken);
   const newUser = new User({ email, avatarURL, verificationToken });
   newUser.setPassword(password);
   const avatarFolder = path.join(avatarsDir, String(newUser._id));
