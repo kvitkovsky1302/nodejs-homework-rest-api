@@ -1,10 +1,12 @@
-const { Conflict, Unauthorized, NotFound } = require("http-errors");
+const { Conflict, Unauthorized, NotFound, BadRequest } = require("http-errors");
 const jwt = require("jsonwebtoken");
 const gravatar = require("gravatar");
 const fs = require("fs/promises");
 const path = require("path");
 const jimp = require("jimp");
+const { v4 } = require("uuid");
 const { User } = require("../models");
+const { sendMail } = require("../helpers");
 
 const avatarsDir = path.join(__dirname, "../public/avatars");
 
@@ -19,11 +21,20 @@ const signUp = async (req, res, next) => {
     next(new Conflict("Email in use"));
   }
 
-  const newUser = new User({ email, avatarURL });
+  const verificationToken = v4();
+  const newUser = new User({ email, avatarURL, verificationToken });
   newUser.setPassword(password);
   const avatarFolder = path.join(avatarsDir, String(newUser._id));
   await fs.mkdir(avatarFolder);
   await newUser.save();
+
+  const mail = {
+    to: email,
+    subject: "Confirm your registration",
+    html: `<a href="http://localhost:3000/api/users/verify/${verificationToken}">Click to confirm your email</a>`,
+  };
+
+  await sendMail(mail);
 
   res.status(201).json({
     status: "success",
@@ -38,6 +49,10 @@ const signUp = async (req, res, next) => {
 const logIn = async (req, res, next) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
+
+  if (!user.verify) {
+    next(new BadRequest("Sorry by your email was not verified"));
+  }
 
   if (!user || !user.comparePassword(password)) {
     next(new Unauthorized("Email or password is wrong"));
@@ -133,6 +148,50 @@ const updateAvatar = async (req, res, next) => {
   }
 };
 
+const verify = async (req, res) => {
+  const { verificationToken } = req.params;
+  const user = await User.findOne({ verificationToken });
+  if (!user) {
+    throw new NotFound("User not found");
+  }
+
+  await User.findByIdAndUpdate(user._id, {
+    verificationToken: null,
+    verify: true,
+  });
+
+  res.json({
+    message: "Verification successful",
+  });
+};
+
+const reVerify = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    throw new BadRequest("missing required field email");
+  }
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new NotFound(`User with email: ${email} is not found`);
+  }
+
+  if (user.verify) {
+    throw new BadRequest("Verification has already been passed");
+  }
+
+  const mail = {
+    to: email,
+    subject: "Confirm your registration",
+    html: `<a href="http://localhost:3000/api/auth/verify${user.verificationToken}">Click to confirm your email</a>`,
+  };
+
+  await sendMail(mail);
+
+  res.json({
+    message: "Verification email sent",
+  });
+};
+
 module.exports = {
   signUp,
   logIn,
@@ -140,4 +199,6 @@ module.exports = {
   getDataCurrentUser,
   updateSubscription,
   updateAvatar,
+  verify,
+  reVerify,
 };
